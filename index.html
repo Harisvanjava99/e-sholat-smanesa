@@ -81,7 +81,7 @@
         </div>
         <div id="teacherLogin" class="max-w-md mx-auto hidden">
             <div class="bg-white rounded-2xl shadow-xl p-8 fade-in">
-                 <div class="text-center mb-8"><div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4"><span class="text-3xl">👨‍🏫</span></div><h2 class="text-2xl font-bold text-gray-800 mb-2">Login Guru Agama</h2><p class="text-gray-600">Masukkan NIP dan password Anda</p></div>
+                <div class="text-center mb-8"><div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4"><span class="text-3xl">👨‍🏫</span></div><h2 class="text-2xl font-bold text-gray-800 mb-2">Login Guru Agama</h2><p class="text-gray-600">Masukkan NIP dan password Anda</p></div>
                 <form onsubmit="loginTeacher(event)" class="space-y-6">
                     <div><label class="block text-sm font-medium text-gray-700 mb-2">NIP</label><input type="text" id="teacherNIP" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent" placeholder="Masukkan NIP"></div>
                     <div><label class="block text-sm font-medium text-gray-700 mb-2">Password</label><input type="password" id="teacherPassword" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent" placeholder="Masukkan password"></div>
@@ -130,7 +130,7 @@
 
         <div id="teacherDashboard" class="max-w-4xl mx-auto hidden">
             <div class="bg-white rounded-2xl shadow-xl p-8 fade-in">
-                 <div class="flex items-center justify-between mb-8"><div><h2 class="text-2xl font-bold text-gray-800">Dashboard Guru Agama</h2><p class="text-gray-600">Selamat datang, <span id="teacherName" class="font-semibold"></span></p></div><button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition duration-300">Logout</button></div>
+                <div class="flex items-center justify-between mb-8"><div><h2 class="text-2xl font-bold text-gray-800">Dashboard Guru Agama</h2><p class="text-gray-600">Selamat datang, <span id="teacherName" class="font-semibold"></span></p></div><button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition duration-300">Logout</button></div>
                 <div class="grid md:grid-cols-2 gap-8">
                     <div><h3 class="text-xl font-semibold text-gray-800 mb-4">Generate Jadwal Sholat</h3><div class="bg-gray-50 rounded-xl p-6"><div class="mb-4"><label class="block text-sm font-medium text-gray-700 mb-2">Tanggal</label><input type="date" id="scheduleDate" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"></div><div class="mb-4"><label class="block text-sm font-medium text-gray-700 mb-2">Waktu Sholat Dhuhur</label><input type="time" id="scheduleTime" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent" value="12:15"></div><button onclick="generateSchedule()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 px-6 rounded-xl transition duration-300">Generate QR Code</button></div></div>
                     <div><h3 class="text-xl font-semibold text-gray-800 mb-4">QR Code Absensi Aktif</h3><div id="qrSection" class="bg-gray-50 rounded-xl p-6 text-center hidden"><div class="mb-4"><p class="text-sm text-gray-600 mb-2">QR Code untuk tanggal: <span id="qrDate" class="font-semibold"></span></p><p class="text-sm text-gray-600 mb-4">Waktu: <span id="qrTime" class="font-semibold"></span></p></div><div id="qrCodeCanvas" class="mx-auto mb-4 bg-white p-4 rounded-lg shadow-lg"></div><div class="mb-4"><div class="text-center text-sm font-mono bg-white p-2 rounded border mb-2"><span id="qrValue"></span></div><div class="bg-yellow-100 border border-yellow-300 rounded-lg p-3"><p class="text-sm text-yellow-800 font-semibold mb-1">Kode Manual:</p><p class="text-2xl font-mono font-bold text-yellow-900 tracking-widest" id="manualCodeDisplay"></p><p class="text-xs text-yellow-700 mt-1">Untuk siswa yang tidak bisa scan QR Code</p></div></div><p class="text-xs text-gray-500">Siswa dapat scan QR Code atau masukkan kode manual untuk absensi</p></div><div id="noQrMessage" class="bg-gray-50 rounded-xl p-6 text-center"><span class="text-4xl mb-4 block">📱</span><p class="text-gray-600">Belum ada QR Code aktif yang di-generate</p></div></div>
@@ -174,7 +174,7 @@
         apiKey: "AIzaSyACgoICihSzgm6kEWwrZtLB9yxHnce3WVQ",
 		authDomain: "e-sholat-smanesa.firebaseapp.com",
 		projectId: "e-sholat-smanesa",
-		storageBucket: "e-sholat-smanesa.firebasestorage.app",
+		storageBucket: "e-sholat-smanesa.appspot.com",
 		messagingSenderId: "1074751643558",
 		appId: "1:1074751643558:web:a4326d1846273917917967"
 	};
@@ -187,7 +187,7 @@
     let currentUser = null;
     let currentRole = null;
     let html5QrCode = null;
-    const GLOBAL_QR_DOC_ID = 'active_dhuhur_qr'; // ID Dokumen Global untuk QR Code
+    const GLOBAL_QR_DOC_ID = 'active_dhuhur_qr'; 
 
     // Inisialisasi
     function init() {
@@ -222,11 +222,6 @@
         document.getElementById('roleSelection').classList.remove('hidden');
     }
     
-    // ==========================================================
-    // BAGIAN FUNGSI-FUNGSI BARU DENGAN FIRESTORE
-    // ==========================================================
-
-    // --- Fungsi Login (DIUBAH) ---
     async function loginStudent(event) {
         event.preventDefault();
         const nisn = document.getElementById('studentNISN').value;
@@ -260,7 +255,6 @@
             if (teacherDoc.exists && teacherDoc.data().password === password) {
                 currentUser = { id: teacherDoc.id, ...teacherDoc.data() };
                 currentRole = 'teacher';
-                 // [CHANGED] Update welcome message
                 document.getElementById('teacherName').textContent = currentUser.name;
                 document.getElementById('teacherLogin').classList.add('hidden');
                 document.getElementById('teacherDashboard').classList.remove('hidden');
@@ -289,7 +283,6 @@
                 adminPass = adminCredsDoc.data().password;
             } else {
                 adminUser = 'admin';
-                // [CHANGED] Password default diubah
                 adminPass = 'Sman87654321';
                 console.warn("Dokumen admin_credentials tidak ditemukan. Menggunakan fallback. Silakan atur password di tab Pengaturan.");
             }
@@ -324,7 +317,6 @@
         for(const form of forms) form.reset();
     }
 
-    // --- FUNGSI SCANNER (DIUBAH) ---
     async function startScanning() {
         try {
             const qrDoc = await db.collection('active_qr').doc(GLOBAL_QR_DOC_ID).get();
@@ -345,7 +337,7 @@
             html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback)
             .catch(err => {
                 console.error("Gagal memulai scanner", err);
-                alert("Tidak dapat memulai scanner. Pastikan Anda memberikan izin kamera.");
+                alert("Tidak dapat memulai scanner. Pastikan Anda memberikan izin kamera di browser Anda.");
                 stopScanning();
             });
         } catch (error) {
@@ -362,7 +354,6 @@
         document.getElementById('qr-reader-results').innerText = '';
     }
 
-    // --- FUNGSI PROSES ABSENSI (DIUBAH TOTAL) ---
     async function processAttendance(method, qrCodeValue = null) {
         try {
             const qrDoc = await db.collection('active_qr').doc(GLOBAL_QR_DOC_ID).get();
@@ -428,7 +419,6 @@
         processAttendance('manual');
     }
 
-    // --- FUNGSI GURU (DIUBAH) ---
     async function generateSchedule() {
         const date = document.getElementById('scheduleDate').value;
         const time = document.getElementById('scheduleTime').value;
@@ -485,7 +475,6 @@
         }
     }
 
-    // --- FUNGSI MEMUAT DATA (DIUBAH) ---
     async function loadAttendanceHistory() {
         if (currentRole !== 'student') return;
         await updateQRStatus();
@@ -559,7 +548,6 @@
     function showManualInput() { document.getElementById('manualInputSection').classList.remove('hidden'); }
     function hideManualInput() { document.getElementById('manualInputSection').classList.add('hidden'); }
     
-    // --- FUNGSI-FUNGSI ADMIN (DIUBAH TOTAL) ---
     function showAdminTab(tab) {
         const contents = ['studentsManagement', 'teachersManagement', 'uploadManagement', 'attendanceRecap', 'settingsManagement'];
         contents.forEach(id => document.getElementById(id).classList.add('hidden'));
@@ -641,8 +629,7 @@
     
     async function loadTeachersList() {
         const container = document.getElementById('teachersManagement');
-        // [CHANGED] Label "Wali Kelas" menjadi "Kelas Ampuan"
-        const formHtml = `<div class="bg-gray-50 rounded-xl p-6"><h3 class="text-xl font-semibold text-gray-800 mb-4">Tambah Guru</h3><form onsubmit="addTeacher(event)" class="grid md:grid-cols-2 gap-4"><div><label class="block text-sm">NIP</label><input type="text" name="nip" required class="w-full px-4 py-3 border rounded-xl"></div><div><label class="block text-sm">Nama</label><input type="text" name="name" required class="w-full px-4 py-3 border rounded-xl"></div><div><label class="block text-sm">Password</label><input type="password" name="password" required class="w-full px-4 py-3 border rounded-xl"></div><div><label class="block text-sm">Kelas Ampuan</label><input type="text" name="class" required class="w-full px-4 py-3 border rounded-xl"></div><div class="md:col-span-2"><button type="submit" class="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-3 px-6 rounded-xl">Tambah</button></div></form></div>`;
+        const formHtml = `<div class="bg-gray-50 rounded-xl p-6"><h3 class="text-xl font-semibold text-gray-800 mb-4">Tambah Guru</h3><form onsubmit="addTeacher(event)" class="grid md:grid-cols-2 gap-4"><div><label class="block text-sm">NIP</label><input type="text" name="nip" required class="w-full px-4 py-3 border rounded-xl"></div><div><label class="block text-sm">Nama</label><input type="text" name="name" required class="w-full px-4 py-3 border rounded-xl"></div><div><label class="block text-sm">Password</label><input type="password" name="password" required class="w-full px-4 py-3 border rounded-xl"></div><div><label class="block text-sm">Kelas Ampuan</label><input type="text" name="class" required class="w-full px-4 py-3 border rounded-xl" placeholder="Kelas yang diajar"></div><div class="md:col-span-2"><button type="submit" class="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-3 px-6 rounded-xl">Tambah</button></div></form></div>`;
         const listContainer = `<div class="bg-gray-50 rounded-xl p-6"><h3 class="text-xl font-semibold text-gray-800 mb-4">Daftar Guru</h3><div id="teacher-list-content" class="space-y-3"><p class="text-gray-600">Memuat data...</p></div></div>`;
         container.innerHTML = formHtml + listContainer;
 
@@ -654,7 +641,6 @@
             if (teachers.length === 0) {
                 listContent.innerHTML = '<p class="text-gray-600 text-center">Belum ada data guru</p>';
             } else {
-                 // [CHANGED] Label "Wali Kelas" menjadi "Kelas Ampuan"
                 listContent.innerHTML = teachers.map(t => `<div class="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between"><div><p class="font-semibold text-gray-800">${t.name}</p><p class="text-sm text-gray-600">NIP: ${t.id} | Kelas Ampuan: ${t.class}</p></div><button onclick="deleteTeacher('${t.id}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-sm">Hapus</button></div>`).join('');
             }
         } catch (error) {
@@ -794,7 +780,7 @@
         
         const grouped = data.reduce((acc, r) => { (acc[r.date] = acc[r.date] || []).push(r); return acc; }, {});
         
-        container.innerHTML = Object.keys(grouped).map(date => {
+        container.innerHTML = Object.keys(grouped).sort().reverse().map(date => {
             return `<div class="bg-white p-4 rounded-lg shadow"><h4 class="font-bold">${new Date(date).toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h4><ul class="mt-2 text-sm divide-y divide-gray-200">${grouped[date].map(r => `<li class="py-1">${r.time} - ${r.studentName} (${r.studentClass}) - <span class="italic">${r.method}</span></li>`).join('')}</ul></div>`
         }).join('');
     }
@@ -855,11 +841,9 @@
         }
     }
 
-    // PDF Print Functions (belum diimplementasikan)
     function printStudentMonthlyReport() { alert('Fungsi print belum diimplementasikan.'); }
     function printTeacherMonthlyReport() { alert('Fungsi print belum diimplementasikan.'); }
 
-    // Initialize app
     init();
 </script>
 </body>
