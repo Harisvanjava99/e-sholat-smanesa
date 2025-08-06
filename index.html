@@ -572,26 +572,42 @@
     }
 
     async function loadStudentsList() {
-        const container = document.getElementById('studentsManagement');
+    const container = document.getElementById('studentsManagement');
+    // Jika container belum ada isinya, buat dulu kerangkanya.
+    if (!container.innerHTML.includes('Daftar Siswa')) {
         const formHtml = `<div class="bg-gray-50 rounded-xl p-6"><h3 class="text-xl font-semibold text-gray-800 mb-4">Tambah Siswa</h3><form onsubmit="addStudent(event)" class="grid md:grid-cols-2 gap-4"><div><label class="block text-sm">NISN</label><input type="text" name="nisn" required class="w-full px-4 py-3 border rounded-xl"></div><div><label class="block text-sm">No Induk</label><input type="text" name="noInduk" required class="w-full px-4 py-3 border rounded-xl"></div><div><label class="block text-sm">Nama</label><input type="text" name="name" required class="w-full px-4 py-3 border rounded-xl"></div><div><label class="block text-sm">Kelas</label><input type="text" name="class" required class="w-full px-4 py-3 border rounded-xl"></div><div class="md:col-span-2"><button type="submit" class="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-3 px-6 rounded-xl">Tambah</button></div></form></div>`;
         const listContainer = `<div class="bg-gray-50 rounded-xl p-6"><h3 class="text-xl font-semibold text-gray-800 mb-4">Daftar Siswa</h3><div id="student-list-content" class="space-y-3"><p class="text-gray-600">Memuat data...</p></div></div>`;
         container.innerHTML = formHtml + listContainer;
-
-        try {
-            const snapshot = await db.collection('students').orderBy('class').orderBy('name').get();
-            const students = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            const listContent = document.getElementById('student-list-content');
-            
-            if (students.length === 0) {
-                listContent.innerHTML = '<p class="text-gray-600 text-center">Belum ada data siswa</p>';
-            } else {
-                listContent.innerHTML = students.map(s => `<div class="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between"><div><p class="font-semibold text-gray-800">${s.name}</p><p class="text-sm text-gray-600">NISN: ${s.id} | Kelas: ${s.class}</p></div><button onclick="deleteStudent('${s.id}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-sm">Hapus</button></div>`).join('');
-            }
-        } catch (error) {
-            console.error("Error memuat daftar siswa: ", error);
-            document.getElementById('student-list-content').innerHTML = '<p class="text-red-600 text-center">Gagal memuat data.</p>';
-        }
     }
+
+    const listContent = document.getElementById('student-list-content');
+    listContent.innerHTML = '<p class="text-gray-600">Memuat data...</p>';
+
+    try {
+        // 1. Ambil data tanpa diurutkan dari database
+        const snapshot = await db.collection('students').get();
+        let students = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // 2. Urutkan data di sini (di dalam browser) menggunakan JavaScript
+        students.sort((a, b) => {
+            if (a.class < b.class) return -1;
+            if (a.class > b.class) return 1;
+            if (a.name < b.name) return -1;
+            if (a.name > b.name) return 1;
+            return 0;
+        });
+
+        if (students.length === 0) {
+            listContent.innerHTML = '<p class="text-gray-600 text-center">Belum ada data siswa</p>';
+        } else {
+            // 3. Tampilkan data yang sudah diurutkan
+            listContent.innerHTML = students.map(s => `<div class="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between"><div><p class="font-semibold text-gray-800">${s.name}</p><p class="text-sm text-gray-600">NISN: ${s.id} | Kelas: ${s.class}</p></div><button onclick="deleteStudent('${s.id}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-sm">Hapus</button></div>`).join('');
+        }
+    } catch (error) {
+        console.error("Error memuat daftar siswa: ", error);
+        listContent.innerHTML = '<p class="text-red-600 text-center">Gagal memuat data. Pastikan aturan Firestore sudah benar.</p>';
+    }
+}
     
     async function addStudent(event) {
         event.preventDefault();
@@ -845,6 +861,7 @@
     function printTeacherMonthlyReport() { alert('Fungsi print belum diimplementasikan.'); }
 
     init();
+	
 </script>
 </body>
 </html>
