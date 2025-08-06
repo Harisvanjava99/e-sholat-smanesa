@@ -573,61 +573,149 @@
 
     async function loadStudentsList() {
     const container = document.getElementById('studentsManagement');
-    if (!container.innerHTML.includes('Daftar Siswa')) {
-        const formHtml = `<div class="bg-gray-50 rounded-xl p-6"><h3 class="text-xl font-semibold text-gray-800 mb-4">Tambah Siswa</h3><form onsubmit="addStudent(event)" class="grid md:grid-cols-2 gap-4"><div><label class="block text-sm">NISN</label><input type="text" name="nisn" required class="w-full px-4 py-3 border rounded-xl"></div><div><label class="block text-sm">No Induk</label><input type="text" name="noInduk" required class="w-full px-4 py-3 border rounded-xl"></div><div><label class="block text-sm">Nama</label><input type="text" name="name" required class="w-full px-4 py-3 border rounded-xl"></div><div><label class="block text-sm">Kelas</label><input type="text" name="class" required class="w-full px-4 py-3 border rounded-xl"></div><div class="md:col-span-2"><button type="submit" class="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-3 px-6 rounded-xl">Tambah</button></div></form></div>`;
-        const listContainer = `<div class="bg-gray-50 rounded-xl p-6"><h3 class="text-xl font-semibold text-gray-800 mb-4">Daftar Siswa</h3><div id="student-list-content" class="space-y-3"><p class="text-gray-600">Memuat data...</p></div></div>`;
-        container.innerHTML = formHtml + listContainer;
-    }
+    // Menambahkan div untuk pencarian dan filter
+    const uiHtml = `
+        <div id="search-container" class="mb-4"></div>
+        <div class="bg-gray-50 rounded-xl p-6">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Tambah Siswa</h3>
+            <form onsubmit="addStudent(event)" class="grid md:grid-cols-2 gap-4">
+                <div><label class="block text-sm">NISN</label><input type="text" name="nisn" required class="w-full px-4 py-3 border rounded-xl"></div>
+                <div><label class="block text-sm">No Induk</label><input type="text" name="noInduk" required class="w-full px-4 py-3 border rounded-xl"></div>
+                <div><label class="block text-sm">Nama</label><input type="text" name="name" required class="w-full px-4 py-3 border rounded-xl"></div>
+                <div><label class="block text-sm">Kelas</label><input type="text" name="class" required class="w-full px-4 py-3 border rounded-xl"></div>
+                <div class="md:col-span-2"><button type="submit" class="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-3 px-6 rounded-xl">Tambah</button></div>
+            </form>
+        </div>
+        <div class="bg-gray-50 rounded-xl p-6 mt-6">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Daftar Siswa</h3>
+            <div id="class-filter-container" class="mb-4 flex flex-wrap gap-2"></div>
+            <div id="student-list-content" class="space-y-3"><p class="text-gray-600">Memuat data...</p></div>
+        </div>`;
+    container.innerHTML = uiHtml;
 
     const listContent = document.getElementById('student-list-content');
     listContent.innerHTML = '<p class="text-gray-600">Memuat data...</p>';
 
     try {
-        // PERUBAHAN UTAMA ADA DI BARIS INI: .orderBy() telah dihapus
         const snapshot = await db.collection('students').get();
-        let students = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Simpan data siswa ke variabel global agar tidak perlu fetch berulang kali
+        allStudents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        if (students.length === 0) {
-            listContent.innerHTML = '<p class="text-gray-600 text-center">Belum ada data siswa</p>';
-            return;
-        }
-        
-        // Logika pengurutan dipindahkan ke sini (client-side)
-        students.sort((a, b) => {
-            if (a.class < b.class) return -1;
-            if (a.class > b.class) return 1;
-            if (a.name < b.name) return -1;
-            if (a.name > b.name) return 1;
-            return 0;
-        });
-
-        const groupedByClass = students.reduce((acc, student) => {
-            (acc[student.class] = acc[student.class] || []).push(student);
-            return acc;
-        }, {});
-
-        let finalHtml = '';
-        for (const className in groupedByClass) {
-            finalHtml += `<div class="mt-4"><h4 class="text-lg font-bold text-gray-700 bg-gray-200 p-2 rounded-t-lg">${className}</h4>`;
-            const studentsInClass = groupedByClass[className];
-            finalHtml += studentsInClass.map(s => 
-                `<div class="bg-white border-l border-r border-b border-gray-200 p-4 flex items-center justify-between">
-                    <div>
-                        <p class="font-semibold text-gray-800">${s.name}</p>
-                        <p class="text-sm text-gray-600">NISN: ${s.id}</p>
-                    </div>
-                    <button onclick="deleteStudent('${s.id}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-sm">Hapus</button>
-                </div>`
-            ).join('');
-            finalHtml += `</div>`;
-        }
-
-        listContent.innerHTML = finalHtml;
+        renderFilterUI(); // Panggil fungsi untuk membuat tombol filter dan search bar
+        applyFilters(); // Panggil fungsi untuk menampilkan data awal
 
     } catch (error) {
         console.error("Error memuat daftar siswa: ", error);
         listContent.innerHTML = '<p class="text-red-600 text-center">Gagal memuat data. Periksa koneksi dan aturan Firestore.</p>';
     }
+}
+// --- KODE BARU UNTUK FILTER DAN PENCARIAN ---
+
+// Variabel global untuk menyimpan semua data siswa dan filter aktif
+let allStudents = [];
+let activeClassFilter = 'all';
+
+// Fungsi untuk membuat UI (tombol filter dan search bar)
+function renderFilterUI() {
+    const searchContainer = document.getElementById('search-container');
+    const filterContainer = document.getElementById('class-filter-container');
+
+    // 1. Buat Search Bar
+    searchContainer.innerHTML = `
+        <div class="bg-gray-50 rounded-xl p-6">
+            <label for="searchInput" class="block text-xl font-semibold text-gray-800 mb-2">🔍 Cari Siswa</label>
+            <input type="text" id="searchInput" onkeyup="applyFilters()" class="w-full px-4 py-3 border rounded-xl" placeholder="Ketik nama siswa untuk mencari...">
+        </div>`;
+
+    // 2. Buat Tombol Filter Kelas
+    const classNames = [...new Set(allStudents.map(s => s.class))].sort();
+    let filterHtml = `<button id="filter-btn-all" onclick="setActiveClassFilter('all')" class="px-4 py-2 rounded-lg font-semibold bg-purple-500 text-white">Tampilkan Semua</button>`;
+    
+    classNames.forEach(className => {
+        filterHtml += `<button id="filter-btn-${className}" onclick="setActiveClassFilter('${className}')" class="px-4 py-2 rounded-lg font-semibold bg-white text-gray-700 hover:bg-gray-200">${className}</button>`;
+    });
+
+    filterContainer.innerHTML = filterHtml;
+}
+
+// Fungsi yang dipanggil saat tombol filter kelas diklik
+function setActiveClassFilter(className) {
+    // Update filter aktif
+    activeClassFilter = className;
+
+    // Update style tombol yang aktif
+    const allButtons = document.querySelectorAll('#class-filter-container button');
+    allButtons.forEach(btn => {
+        btn.classList.remove('bg-purple-500', 'text-white');
+        btn.classList.add('bg-white', 'text-gray-700', 'hover:bg-gray-200');
+    });
+    document.getElementById(`filter-btn-${className}`).classList.add('bg-purple-500', 'text-white');
+    document.getElementById(`filter-btn-${className}`).classList.remove('bg-white', 'text-gray-700', 'hover:bg-gray-200');
+
+    // Terapkan semua filter
+    applyFilters();
+}
+
+// Fungsi utama untuk menerapkan filter dan pencarian
+function applyFilters() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    
+    let filteredStudents = allStudents;
+
+    // 1. Terapkan filter kelas (jika bukan 'Tampilkan Semua')
+    if (activeClassFilter !== 'all') {
+        filteredStudents = filteredStudents.filter(student => student.class === activeClassFilter);
+    }
+
+    // 2. Terapkan filter pencarian nama
+    if (searchTerm) {
+        filteredStudents = filteredStudents.filter(student => student.name.toLowerCase().includes(searchTerm));
+    }
+
+    // Kirim data yang sudah difilter untuk ditampilkan
+    renderStudentList(filteredStudents);
+}
+
+// Fungsi untuk menampilkan daftar siswa ke layar (versi baru)
+function renderStudentList(studentsToDisplay) {
+    const listContent = document.getElementById('student-list-content');
+    
+    if (studentsToDisplay.length === 0) {
+        listContent.innerHTML = '<p class="text-gray-600 text-center py-4">Tidak ada data siswa yang cocok.</p>';
+        return;
+    }
+
+    // Urutkan data yang akan ditampilkan
+    studentsToDisplay.sort((a, b) => {
+        if (a.class < b.class) return -1;
+        if (a.class > b.class) return 1;
+        if (a.name < b.name) return -1;
+        if (a.name > b.name) return 1;
+        return 0;
+    });
+
+    const groupedByClass = studentsToDisplay.reduce((acc, student) => {
+        (acc[student.class] = acc[student.class] || []).push(student);
+        return acc;
+    }, {});
+
+    let finalHtml = '';
+    for (const className in groupedByClass) {
+        finalHtml += `<div class="mt-4"><h4 class="text-lg font-bold text-gray-700 bg-gray-200 p-2 rounded-t-lg">${className}</h4>`;
+        const studentsInClass = groupedByClass[className];
+        finalHtml += studentsInClass.map(s => 
+            `<div class="bg-white border-l border-r border-b border-gray-200 p-4 flex items-center justify-between">
+                <div>
+                    <p class="font-semibold text-gray-800">${s.name}</p>
+                    <p class="text-sm text-gray-600">NISN: ${s.id}</p>
+                </div>
+                <button onclick="deleteStudent('${s.id}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-sm">Hapus</button>
+            </div>`
+        ).join('');
+        finalHtml += `</div>`;
+    }
+
+    listContent.innerHTML = finalHtml;
 }
     
     async function addStudent(event) {
