@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presensi Sholat Dhuhur</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        #qr-reader {
+            width: 100%;
+            max-width: 500px;
+            margin: auto;
+            border: 5px solid #10b981;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        #qr-reader-results {
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-emerald-50 to-teal-100 min-h-screen">
+    <div class="bg-white shadow-lg border-b-4 border-emerald-500">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="w-16 h-16 flex items-center justify-center overflow-hidden">
+                        <img src="https://drive.google.com/thumbnail?id=1mGtARCdkJZoPRX8NLwYy9JJYApqsFBss&sz=w300" alt="Logo Sekolah" class="w-full h-full object-contain">
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-800">E-Sholat Smanesa</h1>
+                        <p class="text-lg text-emerald-600 font-semibold">SMAN 1 Purwoasri</p>
+                        <p class="text-sm text-gray-600">Sistem Absensi Sholat Digital</p>
+                    </div>
+                </div>
+                <div id="currentTime" class="text-right">
+                    <div class="text-lg font-semibold text-gray-800"></div>
+                    <div class="text-sm text-gray-600"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-6 py-8">
+
+        <div id="roleSelection" class="max-w-lg mx-auto">
+            <div class="bg-white rounded-2xl shadow-xl p-8 fade-in">
+                <div class="text-center mb-8">
+                     <div class="w-24 h-24 mx-auto mb-4">
+                        <img src="https://drive.google.com/thumbnail?id=1mGtARCdkJZoPRX8NLwYy9JJYApqsFBss&sz=w300" alt="Logo Sekolah" class="w-full h-full object-contain">
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">SholatQ</h2>
+                    <p class="text-gray-600">Silakan pilih peran Anda</p>
+                </div>
+                <div class="space-y-4">
+                    <button onclick="showLogin('student')" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-4 px-6 rounded-xl transition duration-300 flex items-center justify-center space-x-3"><span class="text-2xl">👨‍🎓</span><span>Siswa</span></button>
+                    <button onclick="showLogin('teacher')" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-4 px-6 rounded-xl transition duration-300 flex items-center justify-center space-x-3"><span class="text-2xl">👨‍🏫</span><span>Wali Kelas</span></button>
+                    <button onclick="showLogin('admin')" class="w-full bg-purple-500 hover:bg-purple-600 text-white font-semibold py-4 px-6 rounded-xl transition duration-300 flex items-center justify-center space-x-3"><span class="text-2xl">👨‍💼</span><span>Operator</span></button>
+                </div>
+            </div>
+        </div>
+
+        <div id="studentLogin" class="max-w-md mx-auto hidden">
+            <div class="bg-white rounded-2xl shadow-xl p-8 fade-in">
+                <div class="text-center mb-8"><div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4"><span class="text-3xl">👨‍🎓</span></div><h2 class="text-2xl font-bold text-gray-800 mb-2">Login Siswa</h2><p class="text-gray-600">Masukkan NISN dan password Anda</p></div>
+                <form onsubmit="loginStudent(event)" class="space-y-6">
+                    <div><label class="block text-sm font-medium text-gray-700 mb-2">NISN</label><input type="text" id="studentNISN" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Masukkan NISN"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-2">Password (No Induk)</label><input type="password" id="studentPassword" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Masukkan No Induk"></div>
+                    <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-xl transition duration-300">Login</button>
+                </form>
+                <button onclick="backToRoleSelection()" class="w-full mt-4 text-gray-600 hover:text-gray-800 font-medium">← Kembali</button>
+            </div>
+        </div>
+        <div id="teacherLogin" class="max-w-md mx-auto hidden">
+            <div class="bg-white rounded-2xl shadow-xl p-8 fade-in">
+                <div class="text-center mb-8"><div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4"><span class="text-3xl">👨‍🏫</span></div><h2 class="text-2xl font-bold text-gray-800 mb-2">Login Guru</h2><p class="text-gray-600">Masukkan NIP dan password Anda</p></div>
+                <form onsubmit="loginTeacher(event)" class="space-y-6">
+                    <div><label class="block text-sm font-medium text-gray-700 mb-2">NIP</label><input type="text" id="teacherNIP" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent" placeholder="Masukkan NIP"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-2">Password</label><input type="password" id="teacherPassword" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent" placeholder="Masukkan password"></div>
+                    <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 px-6 rounded-xl transition duration-300">Login</button>
+                </form>
+                <button onclick="backToRoleSelection()" class="w-full mt-4 text-gray-600 hover:text-gray-800 font-medium">← Kembali</button>
+            </div>
+        </div>
+        <div id="adminLogin" class="max-w-md mx-auto hidden">
+            <div class="bg-white rounded-2xl shadow-xl p-8 fade-in">
+                <div class="text-center mb-8"><div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4"><span class="text-3xl">👨‍💼</span></div><h2 class="text-2xl font-bold text-gray-800 mb-2">Login Admin</h2><p class="text-gray-600">Masukkan username dan password admin</p></div>
+                <form onsubmit="loginAdmin(event)" class="space-y-6">
+                    <div><label class="block text-sm font-medium text-gray-700 mb-2">Username</label><input type="text" id="adminUsername" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Masukkan username"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-2">Password</label><input type="password" id="adminPassword" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Masukkan password"></div>
+                    <button type="submit" class="w-full bg-purple-500 hover:bg-purple-600 text-white font-semibold py-3 px-6 rounded-xl transition duration-300">Login</button>
+                </form>
+                <button onclick="backToRoleSelection()" class="w-full mt-4 text-gray-600 hover:text-gray-800 font-medium">← Kembali</button>
+            </div>
+        </div>
+
+        <div id="studentDashboard" class="max-w-2xl mx-auto hidden">
+            <div class="bg-white rounded-2xl shadow-xl p-8 fade-in">
+                <div class="flex items-center justify-between mb-8"><h2 class="text-2xl font-bold text-gray-800">Dashboard Siswa</h2><p class="text-gray-600">Selamat datang, <span id="studentName" class="font-semibold"></span></p><button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition duration-300">Logout</button></div>
+                <div class="mb-8"><h3 class="text-xl font-semibold text-gray-800 mb-4">Scan QR Code Absensi</h3>
+                    <div id="qrStatus" class="mb-4 p-3 rounded-lg bg-gray-100"><p class="text-sm text-gray-600">Status: <span id="qrStatusText">Memuat...</span></p></div>
+                    <div class="p-6 text-center border-2 border-dashed border-gray-300 rounded-xl">
+                        <div class="mb-4"><span class="text-6xl">📱</span></div>
+                        <p class="text-gray-700 mb-4">Arahkan kamera ke QR Code yang ditampilkan guru</p>
+                        <div class="space-y-3">
+                            <button onclick="startScanning()" id="scanButton" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-xl transition duration-300">📷 Mulai Scan QR Code</button>
+                            <button onclick="showManualInput()" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-xl transition duration-300">⌨️ Masukkan Kode Manual</button>
+                        </div>
+                    </div>
+                    <div id="manualInputSection" class="mt-6 bg-gray-50 rounded-xl p-6 hidden">
+                        <h4 class="text-lg font-semibold text-gray-800 mb-4">Masukkan Kode Absensi</h4><p class="text-gray-600 mb-4">Jika tidak bisa scan QR Code, masukkan kode 5 karakter yang ditampilkan guru</p>
+                        <div class="flex space-x-3"><input type="text" id="manualCode" placeholder="Contoh: A3X9K" maxlength="5" class="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase text-center text-lg font-mono tracking-widest" oninput="this.value = this.value.toUpperCase()"><button onclick="submitManualCode()" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-xl transition duration-300">Submit</button></div>
+                        <button onclick="hideManualInput()" class="w-full mt-3 text-gray-600 hover:text-gray-800 font-medium">Kembali ke Scan QR Code</button>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex items-center justify-between mb-4"><h3 class="text-xl font-semibold text-gray-800">Riwayat Absensi</h3><button onclick="printStudentMonthlyReport()" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-300 flex items-center space-x-2"><span>📄</span><span>Print Bulanan</span></button></div>
+                    <div id="attendanceHistory" class="space-y-3"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="teacherDashboard" class="max-w-4xl mx-auto hidden">
+            <div class="bg-white rounded-2xl shadow-xl p-8 fade-in">
+                <div class="flex items-center justify-between mb-8"><div><h2 class="text-2xl font-bold text-gray-800">Dashboard Guru</h2><p class="text-gray-600">Selamat datang, <span id="teacherName" class="font-semibold"></span></p></div><button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition duration-300">Logout</button></div>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div><h3 class="text-xl font-semibold text-gray-800 mb-4">Generate Jadwal Sholat</h3><div class="bg-gray-50 rounded-xl p-6"><div class="mb-4"><label class="block text-sm font-medium text-gray-700 mb-2">Tanggal</label><input type="date" id="scheduleDate" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"></div><div class="mb-4"><label class="block text-sm font-medium text-gray-700 mb-2">Waktu Sholat Dhuhur</label><input type="time" id="scheduleTime" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent" value="12:15"></div><button onclick="generateSchedule()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 px-6 rounded-xl transition duration-300">Generate QR Code</button></div></div>
+                    <div><h3 class="text-xl font-semibold text-gray-800 mb-4">QR Code Absensi</h3><div id="qrSection" class="bg-gray-50 rounded-xl p-6 text-center hidden"><div class="mb-4"><p class="text-sm text-gray-600 mb-2">QR Code untuk tanggal: <span id="qrDate" class="font-semibold"></span></p><p class="text-sm text-gray-600 mb-4">Waktu: <span id="qrTime" class="font-semibold"></span></p></div><div id="qrCodeCanvas" class="mx-auto mb-4 bg-white p-4 rounded-lg shadow-lg"></div><div class="mb-4"><div class="text-center text-sm font-mono bg-white p-2 rounded border mb-2"><span id="qrValue"></span></div><div class="bg-yellow-100 border border-yellow-300 rounded-lg p-3"><p class="text-sm text-yellow-800 font-semibold mb-1">Kode Manual:</p><p class="text-2xl font-mono font-bold text-yellow-900 tracking-widest" id="manualCodeDisplay"></p><p class="text-xs text-yellow-700 mt-1">Untuk siswa yang tidak bisa scan QR Code</p></div></div><p class="text-xs text-gray-500">Siswa dapat scan QR Code atau masukkan kode manual untuk absensi</p></div><div id="noQrMessage" class="bg-gray-50 rounded-xl p-6 text-center"><span class="text-4xl mb-4 block">📱</span><p class="text-gray-600">Belum ada QR Code yang di-generate</p></div></div>
+                </div>
+                <div class="mt-8"><div class="flex items-center justify-between mb-4"><h3 class="text-xl font-semibold text-gray-800">Daftar Kehadiran Hari Ini</h3><button onclick="printTeacherMonthlyReport()" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-300 flex items-center space-x-2"><span>📄</span><span>Print Rekap Bulanan</span></button></div><div class="bg-gray-50 rounded-xl p-6"><div id="attendanceList" class="space-y-3"><p class="text-gray-600 text-center">Belum ada siswa yang absen hari ini</p></div></div></div>
+            </div>
+        </div>
+        
+        <div id="adminDashboard" class="max-w-6xl mx-auto hidden">
+            <div class="bg-white rounded-2xl shadow-xl p-8 fade-in">
+                <div class="flex items-center justify-between mb-8"><div><h2 class="text-2xl font-bold text-gray-800">Dashboard Admin</h2><p class="text-gray-600">Kelola database siswa dan guru</p></div><button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition duration-300">Logout</button></div>
+                <div class="flex space-x-1 mb-8 bg-gray-100 p-1 rounded-xl overflow-x-auto"><button onclick="showAdminTab('students')" id="studentsTab" class="flex-1 py-3 px-4 rounded-lg font-semibold transition duration-300 bg-purple-500 text-white whitespace-nowrap">👨‍🎓 Database Siswa</button><button onclick="showAdminTab('teachers')" id="teachersTab" class="flex-1 py-3 px-4 rounded-lg font-semibold transition duration-300 text-gray-600 hover:text-gray-800 whitespace-nowrap">👨‍🏫 Database Guru</button><button onclick="showAdminTab('upload')" id="uploadTab" class="flex-1 py-3 px-4 rounded-lg font-semibold transition duration-300 text-gray-600 hover:text-gray-800 whitespace-nowrap">📤 Upload Database</button><button onclick="showAdminTab('attendance')" id="attendanceTab" class="flex-1 py-3 px-4 rounded-lg font-semibold transition duration-300 text-gray-600 hover:text-gray-800 whitespace-nowrap">📊 Rekap Kehadiran</button><button onclick="showAdminTab('settings')" id="settingsTab" class="flex-1 py-3 px-4 rounded-lg font-semibold transition duration-300 text-gray-600 hover:text-gray-800 whitespace-nowrap">⚙️ Pengaturan</button></div>
+                <div id="studentsManagement" class="space-y-6 hidden"></div>
+                <div id="teachersManagement" class="space-y-6 hidden"></div>
+                <div id="uploadManagement" class="space-y-8 hidden"></div>
+                <div id="attendanceRecap" class="space-y-6 hidden"></div>
+                <div id="settingsManagement" class="space-y-6 hidden"></div>
+            </div>
+        </div>
+
+        <div id="scannerModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-2xl p-6 max-w-lg w-full mx-4">
+                <div class="text-center">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Arahkan Kamera ke QR Code</h3>
+                    <div id="qr-reader" class="mb-4"></div>
+                    <div id="qr-reader-results" class="text-green-600 font-semibold"></div>
+                    <button onclick="stopScanning()" class="mt-4 w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-xl transition duration-300">
+                        Tutup Scanner
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+
+<script>
+    // --- KONFIGURASI FIREBASE ---
+	const firebaseConfig = {
+        apiKey: "AIzaSyACgoICihSzgm6kEWwrZtLB9yxHnce3WVQ",
+		authDomain: "e-sholat-smanesa.firebaseapp.com",
+		projectId: "e-sholat-smanesa",
+		storageBucket: "e-sholat-smanesa.firebasestorage.app",
+		messagingSenderId: "1074751643558",
+		appId: "1:1074751643558:web:a4326d1846273917917967"
+	};
+
+    // Inisialisasi Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Variabel global
+    let currentUser = null;
+    let currentRole = null;
+    let html5QrCode = null;
+
+    // Inisialisasi
+    function init() {
+        updateTime();
+        setInterval(updateTime, 1000);
+        const today = new Date().toISOString().split('T')[0];
+        const scheduleDateEl = document.getElementById('scheduleDate');
+        if(scheduleDateEl) scheduleDateEl.value = today;
+    }
+
+    function updateTime() {
+        const now = new Date();
+        const timeElement = document.getElementById('currentTime');
+        const timeStr = now.toLocaleTimeString('id-ID');
+        const dateStr = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        if(timeElement) {
+            timeElement.innerHTML = `<div class="text-lg font-semibold text-gray-800">${timeStr}</div><div class="text-sm text-gray-600">${dateStr}</div>`;
+        }
+    }
+
+    function showLogin(role) {
+        document.getElementById('roleSelection').classList.add('hidden');
+        if (role === 'student') document.getElementById('studentLogin').classList.remove('hidden');
+        else if (role === 'teacher') document.getElementById('teacherLogin').classList.remove('hidden');
+        else if (role === 'admin') document.getElementById('adminLogin').classList.remove('hidden');
+    }
+
+    function backToRoleSelection() {
+        document.getElementById('studentLogin').classList.add('hidden');
+        document.getElementById('teacherLogin').classList.add('hidden');
+        document.getElementById('adminLogin').classList.add('hidden');
+        document.getElementById('roleSelection').classList.remove('hidden');
+    }
+
+    // ==========================================================
+    // BAGIAN FUNGSI-FUNGSI BARU DENGAN FIRESTORE
+    // ==========================================================
+
+    // --- Fungsi Login (DIUBAH) ---
+    async function loginStudent(event) {
+        event.preventDefault();
+        const nisn = document.getElementById('studentNISN').value;
+        const password = document.getElementById('studentPassword').value;
+
+        try {
+            const studentDoc = await db.collection('students').doc(nisn).get();
+            if (studentDoc.exists && studentDoc.data().noInduk === password) {
+                currentUser = { id: studentDoc.id, ...studentDoc.data() };
+                currentRole = 'student';
+                document.getElementById('studentName').textContent = currentUser.name;
+                document.getElementById('studentLogin').classList.add('hidden');
+                document.getElementById('studentDashboard').classList.remove('hidden');
+                await loadAttendanceHistory();
+            } else {
+                alert('NISN atau password salah!');
+            }
+        } catch (error) {
+            console.error("Error login siswa: ", error);
+            alert("Terjadi kesalahan saat login.");
+        }
+    }
+
+    async function loginTeacher(event) {
+        event.preventDefault();
+        const nip = document.getElementById('teacherNIP').value;
+        const password = document.getElementById('teacherPassword').value;
+
+        try {
+            const teacherDoc = await db.collection('teachers').doc(nip).get();
+            if (teacherDoc.exists && teacherDoc.data().password === password) {
+                currentUser = { id: teacherDoc.id, ...teacherDoc.data() };
+                currentRole = 'teacher';
+                document.getElementById('teacherName').textContent = `${currentUser.name} - Wali Kelas ${currentUser.class}`;
+                document.getElementById('teacherLogin').classList.add('hidden');
+                document.getElementById('teacherDashboard').classList.remove('hidden');
+                await loadTodayAttendance();
+            } else {
+                alert('NIP atau password salah!');
+            }
+        } catch (error) {
+            console.error("Error login guru: ", error);
+            alert("Terjadi kesalahan saat login.");
+        }
+    }
+
+    function loginAdmin(event) {
+        event.preventDefault();
+        const username = document.getElementById('adminUsername').value;
+        const password = document.getElementById('adminPassword').value;
+        
+        // CATATAN: Sistem login admin ini tidak aman. Sebaiknya gunakan Firebase Authentication.
+        // Untuk sekarang, kita hardcode saja.
+        if (username === 'admin' && password === 'admin123') {
+            currentUser = { name: 'Administrator' };
+            currentRole = 'admin';
+            document.getElementById('adminLogin').classList.add('hidden');
+            document.getElementById('adminDashboard').classList.remove('hidden');
+            showAdminTab('students');
+        } else {
+            alert('Username atau password admin salah!');
+        }
+    }
+
+    function logout() {
+        if (html5QrCode && html5QrCode.isScanning) {
+            stopScanning();
+        }
+        currentUser = null;
+        currentRole = null;
+        document.getElementById('studentDashboard').classList.add('hidden');
+        document.getElementById('teacherDashboard').classList.add('hidden');
+        document.getElementById('adminDashboard').classList.add('hidden');
+        document.getElementById('roleSelection').classList.remove('hidden');
+        const forms = document.getElementsByTagName('form');
+        for(const form of forms) form.reset();
+    }
+
+    // --- FUNGSI SCANNER (DIUBAH) ---
+    async function startScanning() {
+        try {
+            const qrDoc = await db.collection('active_qr').doc(currentUser.class).get();
+            if (!qrDoc.exists) {
+                alert(`Belum ada QR Code yang tersedia untuk kelas ${currentUser.class}. Mohon hubungi guru wali kelas Anda.`);
+                return;
+            }
+            
+            document.getElementById('scannerModal').classList.remove('hidden');
+            html5QrCode = new Html5Qrcode("qr-reader");
+            const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+                document.getElementById('qr-reader-results').innerText = `Scan Berhasil! Memproses...`;
+                processAttendance('qr', decodedText);
+                stopScanning();
+            };
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+            html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback)
+            .catch(err => {
+                console.error("Gagal memulai scanner", err);
+                alert("Tidak dapat memulai scanner. Pastikan Anda memberikan izin kamera.");
+                stopScanning();
+            });
+        } catch (error) {
+            console.error("Error saat memulai scan: ", error);
+            alert("Gagal memuat data QR Code.");
+        }
+    }
+
+    function stopScanning() {
+        if (html5QrCode && html5QrCode.isScanning) {
+            html5QrCode.stop().catch(err => console.error("Gagal menghentikan scanner.", err));
+        }
+        document.getElementById('scannerModal').classList.add('hidden');
+        document.getElementById('qr-reader-results').innerText = '';
+    }
+
+    // --- FUNGSI PROSES ABSENSI (DIUBAH TOTAL) ---
+    async function processAttendance(method, qrCodeValue = null) {
+        try {
+            const qrDoc = await db.collection('active_qr').doc(currentUser.class).get();
+            if (!qrDoc.exists) {
+                alert('Tidak ada jadwal absensi yang aktif untuk kelas Anda.');
+                return;
+            }
+            
+            const targetQRCode = qrDoc.data();
+            let isValid = false;
+            if (method === 'qr' && qrCodeValue === targetQRCode.value) {
+                isValid = true;
+            } else if (method === 'manual') {
+                const inputCode = document.getElementById('manualCode').value.toUpperCase().trim();
+                if (inputCode === targetQRCode.manualCode) {
+                    isValid = true;
+                } else {
+                     alert('Kode manual salah!');
+                     return;
+                }
+            } else if (method === 'qr') {
+                alert('QR Code tidak valid atau sudah tidak berlaku.');
+                return;
+            }
+
+            if (!isValid) return;
+
+            const today = new Date().toISOString().split('T')[0];
+            const attendanceRef = db.collection('attendance');
+            const snapshot = await attendanceRef.where('studentNisn', '==', currentUser.id).where('date', '==', today).get();
+
+            if (!snapshot.empty) {
+                alert('Anda sudah melakukan absensi hari ini!');
+                return;
+            }
+
+            const attendanceRecord = {
+                studentNisn: currentUser.id,
+                studentName: currentUser.name,
+                studentClass: currentUser.class,
+                date: today,
+                time: new Date().toLocaleTimeString('id-ID'),
+                qrCode: targetQRCode.value,
+                method: method,
+                timestamp: new Date().toISOString()
+            };
+            
+            await attendanceRef.add(attendanceRecord);
+
+            if (method === 'manual') hideManualInput();
+            alert(`Absensi berhasil dengan ${method === 'qr' ? 'scan QR Code' : 'kode manual'}!`);
+            await loadAttendanceHistory();
+
+        } catch (error) {
+            console.error("Error memproses absensi: ", error);
+            alert("Terjadi kesalahan saat memproses absensi.");
+        }
+    }
+
+    function submitManualCode() {
+        const inputCode = document.getElementById('manualCode').value;
+        if (!inputCode || inputCode.length !== 5) { alert('Kode harus terdiri dari 5 karakter!'); return; }
+        processAttendance('manual');
+    }
+
+    // --- FUNGSI GURU (DIUBAH) ---
+    async function generateSchedule() {
+        const date = document.getElementById('scheduleDate').value;
+        const time = document.getElementById('scheduleTime').value;
+        if (!date || !time) { alert('Mohon lengkapi tanggal dan waktu!'); return; }
+
+        const qrValue = `DHUHUR_${currentUser.class}_${date}_${time}_${Date.now()}`;
+        const manualCode = Math.random().toString(36).substring(2, 7).toUpperCase();
+        const newQRCode = { 
+            value: qrValue, 
+            manualCode: manualCode, 
+            date: date, 
+            time: time, 
+            class: currentUser.class, 
+            generated: new Date().toISOString() 
+        };
+        
+        try {
+            // ID dokumen adalah nama kelas, agar mudah dicari dan ditimpa
+            await db.collection('active_qr').doc(currentUser.class).set(newQRCode);
+
+            document.getElementById('noQrMessage').classList.add('hidden');
+            document.getElementById('qrSection').classList.remove('hidden');
+            document.getElementById('qrDate').textContent = new Date(date).toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta' });
+            document.getElementById('qrTime').textContent = time;
+            document.getElementById('qrValue').textContent = qrValue;
+            document.getElementById('manualCodeDisplay').textContent = manualCode;
+
+            const qrCanvas = document.getElementById('qrCodeCanvas');
+            qrCanvas.innerHTML = '';
+            const canvas = document.createElement('canvas');
+            qrCanvas.appendChild(canvas);
+            QRCode.toCanvas(canvas, qrValue, { width: 200, margin: 2 }, (err) => { if(err) console.error(err) });
+            
+            alert(`QR Code untuk kelas ${currentUser.class} berhasil dibuat!`);
+        } catch (error) {
+            console.error("Error membuat jadwal QR: ", error);
+            alert("Gagal membuat jadwal QR Code.");
+        }
+    }
+    
+    // --- FUNGSI MEMUAT DATA (DIUBAH) ---
+    async function loadAttendanceHistory() {
+        if (currentRole !== 'student') return;
+        await updateQRStatus();
+        const historyContainer = document.getElementById('attendanceHistory');
+        historyContainer.innerHTML = '<p class="text-gray-600 text-center py-4">Memuat riwayat...</p>';
+
+        try {
+            const snapshot = await db.collection('attendance')
+                .where('studentNisn', '==', currentUser.id)
+                .orderBy('timestamp', 'desc')
+                .get();
+
+            if (snapshot.empty) {
+                historyContainer.innerHTML = '<p class="text-gray-600 text-center py-4">Belum ada riwayat absensi</p>';
+                return;
+            }
+
+            const studentAttendance = snapshot.docs.map(doc => doc.data());
+            historyContainer.innerHTML = studentAttendance.map(r => `<div class="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center justify-between"><div><p class="font-semibold text-green-800">${new Date(r.date).toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta' })}</p><p class="text-sm text-green-600">Waktu: ${r.time}</p></div><div class="text-green-500"><span class="text-2xl">✅</span></div></div>`).join('');
+        } catch (error) {
+            console.error("Error memuat riwayat: ", error);
+            historyContainer.innerHTML = '<p class="text-red-600 text-center py-4">Gagal memuat riwayat.</p>';
+        }
+    }
+
+    async function updateQRStatus() {
+        if (currentRole !== 'student') return;
+        const statusElement = document.getElementById('qrStatusText');
+        try {
+            const qrDoc = await db.collection('active_qr').doc(currentUser.class).get();
+            if (qrDoc.exists) {
+                statusElement.innerHTML = `<span class="text-green-600 font-semibold">✅ QR Code tersedia untuk kelas ${currentUser.class}</span>`;
+                document.getElementById('qrStatus').className = 'mb-4 p-3 rounded-lg bg-green-100';
+            } else {
+                statusElement.innerHTML = `<span class="text-blue-600 font-semibold">ℹ️ Menunggu QR Code dari guru kelas ${currentUser.class}</span>`;
+                document.getElementById('qrStatus').className = 'mb-4 p-3 rounded-lg bg-blue-100';
+            }
+        } catch (error) {
+            console.error("Error cek status QR: ", error);
+            statusElement.innerHTML = `<span class="text-red-600 font-semibold">⚠️ Gagal memeriksa status QR Code.</span>`;
+            document.getElementById('qrStatus').className = 'mb-4 p-3 rounded-lg bg-red-100';
+        }
+    }
+    
+    async function loadTodayAttendance() {
+        if (currentRole !== 'teacher') return;
+        const today = new Date().toISOString().split('T')[0];
+        const container = document.getElementById('attendanceList');
+        container.innerHTML = `<p class="text-gray-600 text-center">Memuat data kehadiran...</p>`;
+        
+        try {
+            const snapshot = await db.collection('attendance')
+                .where('date', '==', today)
+                .where('studentClass', '==', currentUser.class)
+                .orderBy('timestamp', 'asc')
+                .get();
+
+            if (snapshot.empty) {
+                container.innerHTML = `<p class="text-gray-600 text-center">Belum ada siswa kelas ${currentUser.class} yang absen hari ini</p>`;
+                return;
+            }
+
+            const todayAttendance = snapshot.docs.map(doc => doc.data());
+            container.innerHTML = todayAttendance.map((r, i) => `<div class="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between"><div class="flex items-center space-x-4"><div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center"><span class="text-sm font-semibold text-green-600">${i + 1}</span></div><div><p class="font-semibold text-gray-800">${r.studentName}</p><p class="text-sm text-gray-600">Waktu: ${r.time}</p></div></div><div class="text-green-500"><span class="text-xl">✅</span></div></div>`).join('');
+        } catch (error) {
+            console.error("Error memuat kehadiran hari ini: ", error);
+            container.innerHTML = `<p class="text-red-600 text-center">Gagal memuat data kehadiran.</p>`;
+        }
+    }
+
+    function showManualInput() { document.getElementById('manualInputSection').classList.remove('hidden'); }
+    function hideManualInput() { document.getElementById('manualInputSection').classList.add('hidden'); }
+    
+    // --- FUNGSI-FUNGSI ADMIN (DIUBAH TOTAL) ---
+    function showAdminTab(tab) {
+        const contents = ['studentsManagement', 'teachersManagement', 'uploadManagement', 'attendanceRecap', 'settingsManagement'];
+        contents.forEach(id => document.getElementById(id).classList.add('hidden'));
+
+        const tabs = ['studentsTab', 'teachersTab', 'uploadTab', 'attendanceTab', 'settingsTab'];
+        tabs.forEach(id => {
+            document.getElementById(id).classList.remove('bg-purple-500', 'text-white');
+            document.getElementById(id).classList.add('text-gray-600', 'hover:text-gray-800');
+        });
+        
+        document.getElementById(tab + 'Tab').classList.add('bg-purple-500', 'text-white');
+        document.getElementById(tab + 'Tab').classList.remove('text-gray-600', 'hover:text-gray-800');
+
+        const selectedContentId = tab === 'attendance' ? 'attendanceRecap' : tab + 'Management';
+        document.getElementById(selectedContentId).classList.remove('hidden');
+
+        // Panggil fungsi pemuat data yang sesuai
+        if (tab === 'students') loadStudentsList();
+        else if (tab === 'teachers') loadTeachersList();
+        else if (tab === 'upload') loadUploadManagement();
+        else if (tab === 'attendance') loadAttendanceRecap();
+        else if (tab === 'settings') loadSettingsManagement();
+    }
+
+    async function loadStudentsList() {
+        const container = document.getElementById('studentsManagement');
+        const formHtml = `<div class="bg-gray-50 rounded-xl p-6"><h3 class="text-xl font-semibold text-gray-800 mb-4">Tambah Siswa</h3><form onsubmit="addStudent(event)" class="grid md:grid-cols-2 gap-4"><div><label class="block text-sm">NISN</label><input type="text" name="nisn" required class="w-full px-4 py-3 border rounded-xl"></div><div><label class="block text-sm">No Induk</label><input type="text" name="noInduk" required class="w-full px-4 py-3 border rounded-xl"></div><div><label class="block text-sm">Nama</label><input type="text" name="name" required class="w-full px-4 py-3 border rounded-xl"></div><div><label class="block text-sm">Kelas</label><input type="text" name="class" required class="w-full px-4 py-3 border rounded-xl"></div><div class="md:col-span-2"><button type="submit" class="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-3 px-6 rounded-xl">Tambah</button></div></form></div>`;
+        const listContainer = `<div class="bg-gray-50 rounded-xl p-6"><h3 class="text-xl font-semibold text-gray-800 mb-4">Daftar Siswa</h3><div id="student-list-content" class="space-y-3"><p class="text-gray-600">Memuat data...</p></div></div>`;
+        container.innerHTML = formHtml + listContainer;
+
+        try {
+            const snapshot = await db.collection('students').orderBy('class').orderBy('name').get();
+            const students = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const listContent = document.getElementById('student-list-content');
+            
+            if (students.length === 0) {
+                listContent.innerHTML = '<p class="text-gray-600 text-center">Belum ada data siswa</p>';
+            } else {
+                listContent.innerHTML = students.map(s => `<div class="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between"><div><p class="font-semibold text-gray-800">${s.name}</p><p class="text-sm text-gray-600">NISN: ${s.id} | Kelas: ${s.class}</p></div><button onclick="deleteStudent('${s.id}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-sm">Hapus</button></div>`).join('');
+            }
+        } catch (error) {
+            console.error("Error memuat daftar siswa: ", error);
+            document.getElementById('student-list-content').innerHTML = '<p class="text-red-600 text-center">Gagal memuat data.</p>';
+        }
+    }
+
+    async function addStudent(event) {
+        event.preventDefault();
+        const formData = new FormData(event.target);
+        const student = Object.fromEntries(formData.entries());
+        try {
+            await db.collection('students').doc(student.nisn).set(student);
+            await loadStudentsList();
+            alert('Siswa berhasil ditambahkan!');
+            event.target.reset();
+        } catch (error) {
+            console.error("Error menambah siswa: ", error);
+            alert("Gagal menambahkan siswa. Pastikan NISN belum terdaftar.");
+        }
+    }
+
+    async function deleteStudent(nisn) {
+        if (confirm(`Yakin ingin menghapus siswa dengan NISN ${nisn}?`)) {
+            try {
+                await db.collection('students').doc(nisn).delete();
+                alert('Siswa berhasil dihapus.');
+                await loadStudentsList();
+            } catch (error) {
+                console.error("Error menghapus siswa: ", error);
+                alert("Gagal menghapus siswa.");
+            }
+        }
+    }
+    
+    // Fungsi untuk Guru (Teachers) diadaptasi serupa
+    async function loadTeachersList() {
+        const container = document.getElementById('teachersManagement');
+        const formHtml = `<div class="bg-gray-50 rounded-xl p-6"><h3 class="text-xl font-semibold text-gray-800 mb-4">Tambah Guru</h3><form onsubmit="addTeacher(event)" class="grid md:grid-cols-2 gap-4"><div><label class="block text-sm">NIP</label><input type="text" name="nip" required class="w-full px-4 py-3 border rounded-xl"></div><div><label class="block text-sm">Nama</label><input type="text" name="name" required class="w-full px-4 py-3 border rounded-xl"></div><div><label class="block text-sm">Password</label><input type="password" name="password" required class="w-full px-4 py-3 border rounded-xl"></div><div><label class="block text-sm">Wali Kelas</label><input type="text" name="class" required class="w-full px-4 py-3 border rounded-xl"></div><div class="md:col-span-2"><button type="submit" class="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-3 px-6 rounded-xl">Tambah</button></div></form></div>`;
+        const listContainer = `<div class="bg-gray-50 rounded-xl p-6"><h3 class="text-xl font-semibold text-gray-800 mb-4">Daftar Guru</h3><div id="teacher-list-content" class="space-y-3"><p class="text-gray-600">Memuat data...</p></div></div>`;
+        container.innerHTML = formHtml + listContainer;
+
+        try {
+            const snapshot = await db.collection('teachers').orderBy('name').get();
+            const teachers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const listContent = document.getElementById('teacher-list-content');
+
+            if (teachers.length === 0) {
+                listContent.innerHTML = '<p class="text-gray-600 text-center">Belum ada data guru</p>';
+            } else {
+                listContent.innerHTML = teachers.map(t => `<div class="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between"><div><p class="font-semibold text-gray-800">${t.name}</p><p class="text-sm text-gray-600">NIP: ${t.id} | Wali Kelas: ${t.class}</p></div><button onclick="deleteTeacher('${t.id}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-sm">Hapus</button></div>`).join('');
+            }
+        } catch (error) {
+            console.error("Error memuat daftar guru: ", error);
+            document.getElementById('teacher-list-content').innerHTML = '<p class="text-red-600 text-center">Gagal memuat data.</p>';
+        }
+    }
+    
+    async function addTeacher(event) {
+        event.preventDefault();
+        const formData = new FormData(event.target);
+        const teacher = Object.fromEntries(formData.entries());
+        try {
+            await db.collection('teachers').doc(teacher.nip).set(teacher);
+            await loadTeachersList();
+            alert('Guru berhasil ditambahkan!');
+            event.target.reset();
+        } catch (error) {
+            console.error("Error menambah guru: ", error);
+            alert("Gagal menambahkan guru. Pastikan NIP belum terdaftar.");
+        }
+    }
+
+    async function deleteTeacher(nip) {
+        if (confirm(`Yakin ingin menghapus guru dengan NIP ${nip}?`)) {
+            try {
+                await db.collection('teachers').doc(nip).delete();
+                alert('Guru berhasil dihapus.');
+                await loadTeachersList();
+            } catch (error) {
+                console.error("Error menghapus guru: ", error);
+                alert("Gagal menghapus guru.");
+            }
+        }
+    }
+    
+    function loadUploadManagement() {
+        document.getElementById('uploadManagement').innerHTML = `<div class="bg-gray-50 rounded-xl p-6"><h3 class="text-xl font-semibold text-gray-800 mb-4">Upload Database Siswa (CSV)</h3><p class="text-gray-600 mb-4">Gunakan template untuk memastikan format benar. Data dengan NISN yang sama akan ditimpa.</p><form onsubmit="uploadCsv('students', event)"><input type="file" id="csv-students" accept=".csv" required class="mb-4 w-full"><div class="flex space-x-4"><button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-xl">Upload Siswa</button><button type="button" onclick="downloadTemplate('students')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-xl">Download Template</button></div></form></div><div class="bg-gray-50 rounded-xl p-6"><h3 class="text-xl font-semibold text-gray-800 mb-4">Upload Database Guru (CSV)</h3><p class="text-gray-600 mb-4">Data dengan NIP yang sama akan ditimpa.</p><form onsubmit="uploadCsv('teachers', event)"><input type="file" id="csv-teachers" accept=".csv" required class="mb-4 w-full"><div class="flex space-x-4"><button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-6 rounded-xl">Upload Guru</button><button type="button" onclick="downloadTemplate('teachers')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-xl">Download Template</button></div></form></div>`;
+    }
+
+    function downloadTemplate(type) {
+        const headers = type === 'students' ? ['nisn', 'noInduk', 'name', 'class'] : ['nip', 'name', 'password', 'class'];
+        const csv = headers.join(',');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `template_${type}.csv`;
+        link.click();
+    }
+    
+    function uploadCsv(type, event) {
+        event.preventDefault();
+        const file = event.target.querySelector('input').files[0];
+        if (!file) return;
+
+        Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            complete: async (results) => {
+                const collectionName = type === 'students' ? 'students' : 'teachers';
+                const keyField = type === 'students' ? 'nisn' : 'nip';
+                
+                const batch = db.batch();
+                let counter = 0;
+                results.data.forEach(row => {
+                    const docId = row[keyField];
+                    if (docId) {
+                        const docRef = db.collection(collectionName).doc(docId.trim());
+                        batch.set(docRef, row);
+                        counter++;
+                    }
+                });
+
+                try {
+                    await batch.commit();
+                    alert(`${counter} baris data berhasil diunggah dan disimpan ke database!`);
+                    event.target.reset();
+                    if(type === 'students') showAdminTab('students'); else showAdminTab('teachers');
+                } catch (error) {
+                    console.error("Error batch upload: ", error);
+                    alert("Terjadi kesalahan saat mengunggah data.");
+                }
+            }
+        });
+    }
+
+    async function loadAttendanceRecap() {
+        const container = document.getElementById('attendanceRecap');
+        const now = new Date();
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+        container.innerHTML = `<div class="bg-gray-50 rounded-xl p-6"><h3 class="text-xl font-semibold text-gray-800 mb-4">Filter Rekap</h3><div class="grid md:grid-cols-3 gap-4 mb-4"><div><label class="block text-sm">Kelas</label><input type="text" id="filterClass" class="w-full px-4 py-3 border rounded-xl" placeholder="Contoh: XII IPA 1"></div><div><label class="block text-sm">Tgl Mulai</label><input type="date" id="filterStartDate" value="${firstDay}" class="w-full px-4 py-3 border rounded-xl"></div><div><label class="block text-sm">Tgl Akhir</label><input type="date" id="filterEndDate" value="${lastDay}" class="w-full px-4 py-3 border rounded-xl"></div></div><button onclick="filterAttendance()" class="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-6 rounded-xl">Terapkan Filter</button></div><div class="bg-gray-50 rounded-xl p-6"><h3 class="text-xl font-semibold text-gray-800 mb-4">Hasil Rekap</h3><div id="attendanceRecapList" class="space-y-3"><p class="text-gray-600 text-center">Terapkan filter untuk melihat hasil.</p></div></div>`;
+    }
+
+    async function filterAttendance() {
+        const listContainer = document.getElementById('attendanceRecapList');
+        listContainer.innerHTML = '<p class="text-gray-600 text-center">Memfilter data...</p>';
+
+        const filterClass = document.getElementById('filterClass').value.trim();
+        const startDate = document.getElementById('filterStartDate').value;
+        const endDate = document.getElementById('filterEndDate').value;
+        
+        try {
+            let query = db.collection('attendance');
+            if (filterClass) {
+                query = query.where('studentClass', '==', filterClass);
+            }
+            if (startDate) {
+                query = query.where('date', '>=', startDate);
+            }
+            if (endDate) {
+                query = query.where('date', '<=', endDate);
+            }
+            query = query.orderBy('date', 'desc').orderBy('timestamp', 'desc');
+
+            const snapshot = await query.get();
+            const data = snapshot.docs.map(doc => doc.data());
+            displayAttendanceRecap(data);
+        } catch (error) {
+            console.error("Error filter absensi: ", error);
+            listContainer.innerHTML = `<p class="text-red-600 text-center">Gagal memfilter data. Error: ${error.message}</p><p class="text-sm text-gray-500 text-center mt-2">Catatan: Firestore memerlukan 'index' untuk query gabungan. Jika ini error pertama kali, buka Firebase Console, cari link di pesan error untuk membuat index secara otomatis, lalu coba lagi setelah beberapa menit.</p>`;
+        }
+    }
+
+    function displayAttendanceRecap(data) {
+        const container = document.getElementById('attendanceRecapList');
+        if (data.length === 0) { container.innerHTML = '<p class="text-gray-600 text-center">Tidak ada data yang cocok dengan filter.</p>'; return; }
+        
+        const grouped = data.reduce((acc, r) => { (acc[r.date] = acc[r.date] || []).push(r); return acc; }, {});
+        
+        container.innerHTML = Object.keys(grouped).map(date => {
+            return `<div class="bg-white p-4 rounded-lg shadow"><h4 class="font-bold">${new Date(date).toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h4><ul class="mt-2 text-sm divide-y divide-gray-200">${grouped[date].map(r => `<li class="py-1">${r.time} - ${r.studentName} (${r.studentClass}) - <span class="italic">${r.method}</span></li>`).join('')}</ul></div>`
+        }).join('');
+    }
+
+    function loadSettingsManagement() {
+        document.getElementById('settingsManagement').innerHTML = `<div class="bg-gray-50 rounded-xl p-6"><h3 class="text-xl font-semibold text-gray-800 mb-4">Pengaturan</h3><p class="text-gray-600">Fitur pengaturan belum diimplementasikan di versi ini.</p></div>`;
+    }
+
+    // PDF Print Functions (belum diimplementasikan)
+    function printStudentMonthlyReport() { alert('Fungsi print belum diimplementasikan.'); }
+    function printTeacherMonthlyReport() { alert('Fungsi print belum diimplementasikan.'); }
+
+    // Initialize app
+    init();
+</script>
+</body>
+</html>
