@@ -6,11 +6,17 @@
     <title>Presensi Sholat Dhuhur</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js" defer></script>
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" defer></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js?v=2" defer></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js?v=2" defer></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js?v=2" defer></script>
+	<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js?v=2" defer></script>
+	<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof QRCode === 'undefined') {
+            alert('PERINGATAN: Library QRCode GAGAL dimuat! Fitur QR Code tidak akan berfungsi.');
+        }
+    });
+</script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
