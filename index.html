@@ -6,33 +6,18 @@
     <title>Presensi Sholat Dhuhur</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
-    	<script src="qrcode.min.js" defer></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js?v=2" defer></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js?v=2" defer></script>
-	<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js?v=2" defer></script>
-	<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        if (typeof QRCode === 'undefined') {
-            alert('PERINGATAN: Library QRCode GAGAL dimuat! Fitur QR Code tidak akan berfungsi.');
-        }
-    });
-</script>
+    <script src="qrcode.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js" defer></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" defer></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
         .fade-in { animation: fadeIn 0.5s ease-in; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        #qr-reader {
-            width: 100%;
-            max-width: 500px;
-            margin: auto;
-            border: 5px solid #10b981;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-        #qr-reader-results {
-            font-family: monospace;
-        }
+        #qr-reader { width: 100%; max-width: 500px; margin: auto; border: 5px solid #10b981; border-radius: 10px; overflow: hidden; }
+        #qr-reader-results { font-family: monospace; }
     </style>
 </head>
 <body class="bg-gradient-to-br from-emerald-50 to-teal-100 min-h-screen">
@@ -484,7 +469,6 @@
         try {
             await db.collection('active_qr').doc(GLOBAL_QR_DOC_ID).set(newQRCode);
             displayQRCode(newQRCode);
-            // Menghapus alert sukses agar tidak mengganggu
         } catch (error) {
             console.error("Error membuat jadwal QR: ", error);
             alert("Gagal membuat jadwal QR Code.");
@@ -564,7 +548,6 @@
         }
     }
     
-    // [DIUBAH] Fungsi dimodifikasi agar menampilkan semua kelas
     async function loadTodayAttendance() {
         if (currentRole !== 'teacher') return;
         const today = new Date().toISOString().split('T')[0];
@@ -572,20 +555,17 @@
         container.innerHTML = `<p class="text-gray-600 text-center">Memuat data kehadiran...</p>`;
         
         try {
-            // Filter per kelas dihapus, sekarang mengambil semua data hari ini
             const snapshot = await db.collection('attendance')
                 .where('date', '==', today)
                 .orderBy('timestamp', 'asc')
                 .get();
 
             if (snapshot.empty) {
-                // Pesan diubah menjadi lebih umum
                 container.innerHTML = `<p class="text-gray-600 text-center">Belum ada siswa yang absen hari ini</p>`;
                 return;
             }
 
             const todayAttendance = snapshot.docs.map(doc => doc.data());
-            // Tampilan diubah untuk menyertakan kelas siswa
             container.innerHTML = todayAttendance.map((r, i) => 
                 `<div class="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between">
                     <div class="flex items-center space-x-4">
@@ -1026,4 +1006,3 @@
 </script>
 </body>
 </html>
-
