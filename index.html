@@ -484,7 +484,7 @@
         try {
             await db.collection('active_qr').doc(GLOBAL_QR_DOC_ID).set(newQRCode);
             displayQRCode(newQRCode);
-            alert(`QR Code global berhasil dibuat! Semua siswa bisa melakukan scan.`);
+            // Menghapus alert sukses agar tidak mengganggu
         } catch (error) {
             console.error("Error membuat jadwal QR: ", error);
             alert("Gagal membuat jadwal QR Code.");
@@ -573,12 +573,11 @@
         try {
             const snapshot = await db.collection('attendance')
                 .where('date', '==', today)
-                .where('studentClass', '==', currentUser.class)
                 .orderBy('timestamp', 'asc')
                 .get();
 
             if (snapshot.empty) {
-                container.innerHTML = `<p class="text-gray-600 text-center">Belum ada siswa kelas ${currentUser.class} yang absen hari ini</p>`;
+                container.innerHTML = `<p class="text-gray-600 text-center">Belum ada siswa yang absen hari ini</p>`;
                 return;
             }
 
@@ -593,64 +592,31 @@
     function showManualInput() { document.getElementById('manualInputSection').classList.remove('hidden'); }
     function hideManualInput() { document.getElementById('manualInputSection').classList.add('hidden'); }
     
-    function showAdminTab(tab) {
-        const contents = ['studentsManagement', 'teachersManagement', 'uploadManagement', 'attendanceRecap', 'settingsManagement'];
-        contents.forEach(id => document.getElementById(id).classList.add('hidden'));
-
-        const tabs = ['studentsTab', 'teachersTab', 'uploadTab', 'attendanceTab', 'settingsTab'];
-        tabs.forEach(id => {
-            document.getElementById(id).classList.remove('bg-purple-500', 'text-white');
-            document.getElementById(id).classList.add('text-gray-600', 'hover:text-gray-800');
-        });
-        
-        document.getElementById(tab + 'Tab').classList.add('bg-purple-500', 'text-white');
-        document.getElementById(tab + 'Tab').classList.remove('text-gray-600', 'hover:text-gray-800');
-
-        const selectedContentId = tab === 'attendance' ? 'attendanceRecap' : tab + 'Management';
-        document.getElementById(selectedContentId).classList.remove('hidden');
-
-        if (tab === 'students') loadStudentsList();
-        else if (tab === 'teachers') loadTeachersList();
-        else if (tab === 'upload') loadUploadManagement();
-        else if (tab === 'attendance') loadAttendanceRecap();
-        else if (tab === 'settings') loadSettingsManagement();
-    }
-
-    // --- KODE BARU UNTUK FILTER DAN PENCARIAN ---
-
-    // Variabel global untuk menyimpan semua data siswa dan filter aktif
     let allStudents = [];
     let activeClassFilter = 'all';
 
-    // Fungsi untuk membuat UI (tombol filter dan search bar)
     function renderFilterUI() {
         const searchContainer = document.getElementById('search-container');
         const filterContainer = document.getElementById('class-filter-container');
+        if (!searchContainer || !filterContainer) return;
 
-        // 1. Buat Search Bar
         searchContainer.innerHTML = `
             <div class="bg-gray-50 rounded-xl p-6">
                 <label for="searchInput" class="block text-xl font-semibold text-gray-800 mb-2">🔍 Cari Siswa</label>
                 <input type="text" id="searchInput" onkeyup="applyFilters()" class="w-full px-4 py-3 border rounded-xl" placeholder="Ketik nama siswa untuk mencari...">
             </div>`;
 
-        // 2. Buat Tombol Filter Kelas
         const classNames = [...new Set(allStudents.map(s => s.class))].sort();
         let filterHtml = `<button id="filter-btn-all" onclick="setActiveClassFilter('all')" class="px-4 py-2 rounded-lg font-semibold bg-purple-500 text-white">Tampilkan Semua</button>`;
         
         classNames.forEach(className => {
             filterHtml += `<button id="filter-btn-${className}" onclick="setActiveClassFilter('${className}')" class="px-4 py-2 rounded-lg font-semibold bg-white text-gray-700 hover:bg-gray-200">${className}</button>`;
         });
-
         filterContainer.innerHTML = filterHtml;
     }
 
-    // Fungsi yang dipanggil saat tombol filter kelas diklik
     function setActiveClassFilter(className) {
-        // Update filter aktif
         activeClassFilter = className;
-
-        // Update style tombol yang aktif
         const allButtons = document.querySelectorAll('#class-filter-container button');
         allButtons.forEach(btn => {
             btn.classList.remove('bg-purple-500', 'text-white');
@@ -658,41 +624,34 @@
         });
         document.getElementById(`filter-btn-${className}`).classList.add('bg-purple-500', 'text-white');
         document.getElementById(`filter-btn-${className}`).classList.remove('bg-white', 'text-gray-700', 'hover:bg-gray-200');
-
-        // Terapkan semua filter
         applyFilters();
     }
 
-    // Fungsi utama untuk menerapkan filter dan pencarian
     function applyFilters() {
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-        
+        const searchInput = document.getElementById('searchInput');
+        if (!searchInput) return;
+        const searchTerm = searchInput.value.toLowerCase();
         let filteredStudents = allStudents;
 
-        // 1. Terapkan filter kelas (jika bukan 'Tampilkan Semua')
         if (activeClassFilter !== 'all') {
             filteredStudents = filteredStudents.filter(student => student.class === activeClassFilter);
         }
 
-        // 2. Terapkan filter pencarian nama
         if (searchTerm) {
             filteredStudents = filteredStudents.filter(student => student.name.toLowerCase().includes(searchTerm));
         }
-
-        // Kirim data yang sudah difilter untuk ditampilkan
         renderStudentList(filteredStudents);
     }
-    
-    // Fungsi untuk menampilkan daftar siswa ke layar (versi baru)
+
     function renderStudentList(studentsToDisplay) {
         const listContent = document.getElementById('student-list-content');
+        if (!listContent) return;
         
         if (studentsToDisplay.length === 0) {
             listContent.innerHTML = '<p class="text-gray-600 text-center py-4">Tidak ada data siswa yang cocok.</p>';
             return;
         }
 
-        // Urutkan data yang akan ditampilkan
         studentsToDisplay.sort((a, b) => {
             if (a.class < b.class) return -1;
             if (a.class > b.class) return 1;
@@ -721,8 +680,76 @@
             ).join('');
             finalHtml += `</div>`;
         }
-
         listContent.innerHTML = finalHtml;
+    }
+    
+    async function loadStudentsList() {
+        const container = document.getElementById('studentsManagement');
+        const uiHtml = `
+            <div id="search-container" class="mb-4"></div>
+            <div class="bg-gray-50 rounded-xl p-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Tambah Siswa</h3>
+                <form onsubmit="addStudent(event)" class="grid md:grid-cols-2 gap-4">
+                    <div><label class="block text-sm">NISN</label><input type="text" name="nisn" required class="w-full px-4 py-3 border rounded-xl"></div>
+                    <div><label class="block text-sm">No Induk</label><input type="text" name="noInduk" required class="w-full px-4 py-3 border rounded-xl"></div>
+                    <div><label class="block text-sm">Nama</label><input type="text" name="name" required class="w-full px-4 py-3 border rounded-xl"></div>
+                    <div><label class="block text-sm">Kelas</label><input type="text" name="class" required class="w-full px-4 py-3 border rounded-xl"></div>
+                    <div class="md:col-span-2"><button type="submit" class="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-3 px-6 rounded-xl">Tambah</button></div>
+                </form>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-6 mt-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Daftar Siswa</h3>
+                <div id="class-filter-container" class="mb-4 flex flex-wrap gap-2"></div>
+                <div id="student-list-content" class="space-y-3"><p class="text-gray-600">Memuat data...</p></div>
+            </div>`;
+        container.innerHTML = uiHtml;
+
+        const listContent = document.getElementById('student-list-content');
+        listContent.innerHTML = '<p class="text-gray-600">Memuat data...</p>';
+
+        try {
+            const snapshot = await db.collection('students').get();
+            allStudents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            renderFilterUI();
+            applyFilters();
+
+        } catch (error) {
+            console.error("Error memuat daftar siswa: ", error);
+            listContent.innerHTML = '<p class="text-red-600 text-center">Gagal memuat data. Periksa koneksi dan aturan Firestore.</p>';
+        }
+    }
+    
+    function showAdminTab(tab) {
+        const contents = ['studentsManagement', 'teachersManagement', 'uploadManagement', 'attendanceRecap', 'settingsManagement'];
+        contents.forEach(id => document.getElementById(id).classList.add('hidden'));
+
+        const tabs = ['studentsTab', 'teachersTab', 'uploadTab', 'attendanceTab', 'settingsTab'];
+        tabs.forEach(id => {
+            const tabEl = document.getElementById(id);
+            if (tabEl) {
+                tabEl.classList.remove('bg-purple-500', 'text-white');
+                tabEl.classList.add('text-gray-600', 'hover:text-gray-800');
+            }
+        });
+        
+        const selectedTabEl = document.getElementById(tab + 'Tab');
+        if (selectedTabEl) {
+            selectedTabEl.classList.add('bg-purple-500', 'text-white');
+            selectedTabEl.classList.remove('text-gray-600', 'hover:text-gray-800');
+        }
+
+        const selectedContentId = tab === 'attendance' ? 'attendanceRecap' : tab + 'Management';
+        const contentEl = document.getElementById(selectedContentId);
+        if (contentEl) {
+            contentEl.classList.remove('hidden');
+        }
+
+        if (tab === 'students') loadStudentsList();
+        else if (tab === 'teachers') loadTeachersList();
+        else if (tab === 'upload') loadUploadManagement();
+        else if (tab === 'attendance') loadAttendanceRecap();
+        else if (tab === 'settings') loadSettingsManagement();
     }
     
     async function addStudent(event) {
@@ -751,7 +778,6 @@
             try {
                 await db.collection('students').doc(nisn).delete();
                 alert('Siswa berhasil dihapus.');
-                // Muat ulang data dari Firestore untuk mendapatkan daftar terbaru
                 await loadStudentsList();
             } catch (error) {
                 console.error("Error menghapus siswa: ", error);
