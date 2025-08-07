@@ -564,6 +564,7 @@
         }
     }
     
+    // [DIUBAH] Fungsi dimodifikasi agar menampilkan semua kelas
     async function loadTodayAttendance() {
         if (currentRole !== 'teacher') return;
         const today = new Date().toISOString().split('T')[0];
@@ -571,23 +572,40 @@
         container.innerHTML = `<p class="text-gray-600 text-center">Memuat data kehadiran...</p>`;
         
         try {
+            // Filter per kelas dihapus, sekarang mengambil semua data hari ini
             const snapshot = await db.collection('attendance')
                 .where('date', '==', today)
                 .orderBy('timestamp', 'asc')
                 .get();
 
             if (snapshot.empty) {
+                // Pesan diubah menjadi lebih umum
                 container.innerHTML = `<p class="text-gray-600 text-center">Belum ada siswa yang absen hari ini</p>`;
                 return;
             }
 
             const todayAttendance = snapshot.docs.map(doc => doc.data());
-            container.innerHTML = todayAttendance.map((r, i) => `<div class="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between"><div class="flex items-center space-x-4"><div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center"><span class="text-sm font-semibold text-green-600">${i + 1}</span></div><div><p class="font-semibold text-gray-800">${r.studentName}</p><p class="text-sm text-gray-600">Waktu: ${r.time}</p></div></div><div class="text-green-500"><span class="text-xl">✅</span></div></div>`).join('');
+            // Tampilan diubah untuk menyertakan kelas siswa
+            container.innerHTML = todayAttendance.map((r, i) => 
+                `<div class="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <span class="text-sm font-semibold text-green-600">${i + 1}</span>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-800">${r.studentName} (${r.studentClass})</p>
+                            <p class="text-sm text-gray-600">Waktu: ${r.time}</p>
+                        </div>
+                    </div>
+                    <div class="text-green-500"><span class="text-xl">✅</span></div>
+                </div>`
+            ).join('');
         } catch (error) {
             console.error("Error memuat kehadiran hari ini: ", error);
             container.innerHTML = `<p class="text-red-600 text-center">Gagal memuat data kehadiran.</p>`;
         }
     }
+
 
     function showManualInput() { document.getElementById('manualInputSection').classList.remove('hidden'); }
     function hideManualInput() { document.getElementById('manualInputSection').classList.add('hidden'); }
