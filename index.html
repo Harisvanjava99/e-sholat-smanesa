@@ -927,41 +927,41 @@
 
     // [BARU] Fungsi diubah total untuk menampilkan tabel dan siswa yang tidak hadir
     async function loadAttendanceRecap() {
-        const container = document.getElementById('attendanceRecap');
-        const now = new Date();
-        const today = now.toISOString().split('T')[0];
+    const container = document.getElementById('attendanceRecap');
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
 
-        // Ambil daftar semua kelas dari database guru atau siswa untuk dropdown
-        const teachersSnapshot = await db.collection('teachers').get();
-        const teacherClasses = teachersSnapshot.docs.map(doc => doc.data().class);
-        const uniqueClasses = [...new Set(teacherClasses)].sort();
-        const classOptions = uniqueClasses.map(c => `<option value="${c}">${c}</option>`).join('');
+    // [DIUBAH] Ambil daftar semua kelas dari database SISWA untuk dropdown
+    const studentsSnapshot = await db.collection('students').get();
+    const studentClasses = studentsSnapshot.docs.map(doc => doc.data().class);
+    const uniqueClasses = [...new Set(studentClasses)].sort();
+    const classOptions = uniqueClasses.map(c => `<option value="${c}">${c}</option>`).join('');
 
-        container.innerHTML = `
-            <div class="bg-gray-50 rounded-xl p-6">
-                <h3 class="text-xl font-semibold text-gray-800 mb-4">Filter Rekap</h3>
-                <div class="grid md:grid-cols-3 gap-4 mb-4">
-                    <div>
-                        <label class="block text-sm">Kelas</label>
-                        <select id="filterClass" class="w-full px-4 py-3 border rounded-xl">
-                            <option value="">Semua Kelas</option>
-                            ${classOptions}
-                        </select>
-                    </div>
-                    <div><label class="block text-sm">Tanggal</label><input type="date" id="filterDate" value="${today}" class="w-full px-4 py-3 border rounded-xl"></div>
+    container.innerHTML = `
+        <div class="bg-gray-50 rounded-xl p-6">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Filter Rekap</h3>
+            <div class="grid md:grid-cols-3 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm">Kelas</label>
+                    <select id="filterClass" class="w-full px-4 py-3 border rounded-xl">
+                        <option value="">Pilih Kelas</option>
+                        ${classOptions}
+                    </select>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <button onclick="filterAttendance()" class="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-6 rounded-xl">Tampilkan Rekap</button>
-                    <button onclick="printRecap()" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded-xl">Cetak PDF</button>
-                </div>
+                <div><label class="block text-sm">Tanggal</label><input type="date" id="filterDate" value="${today}" class="w-full px-4 py-3 border rounded-xl"></div>
             </div>
-            <div class="bg-gray-50 rounded-xl p-6 mt-6">
-                <h3 class="text-xl font-semibold text-gray-800 mb-4">Hasil Rekap</h3>
-                <div id="attendanceRecapList" class="overflow-x-auto">
-                    <p class="text-gray-600 text-center">Pilih kelas dan tanggal lalu klik "Tampilkan Rekap".</p>
-                </div>
-            </div>`;
-    }
+            <div class="flex items-center space-x-4">
+                <button onclick="filterAttendance()" class="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-6 rounded-xl">Tampilkan Rekap</button>
+                <button onclick="printRecap()" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded-xl">Cetak PDF</button>
+            </div>
+        </div>
+        <div class="bg-gray-50 rounded-xl p-6 mt-6">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Hasil Rekap</h3>
+            <div id="attendanceRecapList" class="overflow-x-auto">
+                <p class="text-gray-600 text-center">Pilih kelas dan tanggal lalu klik "Tampilkan Rekap".</p>
+            </div>
+        </div>`;
+}
 
     // [BARU] Fungsi diubah total untuk memproses dan menampilkan tabel
     async function filterAttendance() {
@@ -1140,3 +1140,4 @@
 </script>
 </body>
 </html>
+
